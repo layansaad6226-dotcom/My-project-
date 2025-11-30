@@ -1,0 +1,102 @@
+import nltk import pandas as pd
+
+df = pd.read_csv(“Admission_Predict_Ver1.1.csv”) df.head()
+
+Step 1: Checking & Handling Missing Data
+
+print(“Missing values per column:”) print(df.isnull().sum())
+
+df = df.dropna()
+
+print(“values after processing:”) print(df.isnull().sum())
+
+Step 2: Tokenization
+
+df = pd.read_csv(“Admission_Predict_Ver1.1.csv”)
+
+print(“Columns:”, df.columns.tolist())
+
+df.columns = df.columns.str.strip().str.lower().str.replace(” “,”_“)
+print(”Clean columns:“, df.columns.tolist())
+
+possible_gre = ‘gre_score’ possible_toefl = ‘toefl_score’
+
+if possible_gre not in df.columns or possible_toefl not in df.columns:
+print(“Note: expected columns not found. Showing numeric columns for
+selection:”)
+print(df.select_dtypes(include=[‘number’]).columns.tolist()) else:
+df[possible_gre] = df[possible_gre].astype(str).fillna(’‘)
+df[possible_toefl] = df[possible_toefl].astype(str).fillna(’’)
+
+    df['student_profile'] = "GRE_" + df[possible_gre].str.replace('\.0+$','', regex=True) + \
+                            "_TOEFL_" + df[possible_toefl].str.replace('\.0+$','', regex=True)
+
+    df['tokens'] = df['student_profile'].str.replace('_', ' ').str.split()
+    print(df[['student_profile','tokens']].head())
+
+Step 3: Normalization & scaling
+
+from sklearn.preprocessing import MinMaxScaler
+
+cols_to_scale = [‘gre_score’, ‘toefl_score’, ‘cgpa’] df_scaled =
+df.copy()
+
+scaler = MinMaxScaler() df_scaled[cols_to_scale] =
+scaler.fit_transform(df[cols_to_scale]) print(df_scaled.head())
+
+Step 4: Reformatting
+
+df.columns = df.columns.str.strip().str.lower().str.replace(” “,”_“)
+print(df.columns)
+
+Step 5: Removing Duplicate Records
+
+print(“Number of duplicate rows before removal:”, df.duplicated().sum())
+
+df_before = df.copy()
+
+df = df.drop_duplicates().reset_index(drop=True)
+
+print(“Number of duplicate rows after removal:”, df.duplicated().sum())
+print(“Shape before:”, df_before.shape) print(“Shape after :”, df.shape)
+print(df.head())
+
+Step 6: Validating Data
+
+import numpy as np
+
+print(“Shape before validation:”, df.shape) print(“and dtypes:”)
+print(df.dtypes)
+
+print(“values per column:”) print(df.isnull().sum())
+
+print(“of duplicate rows:”, df.duplicated().sum())
+
+rules = { ‘gre_score’: (260, 340), ‘toefl_score’: (0, 120), ‘cgpa’:
+(0.0, 4.0), ‘university_rating’: (1, 5), ‘sop’: (1.0, 5.0), ‘lor’: (1.0,
+5.0), ‘research’: (0, 1), ‘chance_of_admit’: (0.0, 1.0) }
+
+invalid_summary = {} invalid_indices = set()
+
+for col, (low, high) in rules.items(): if col in df.columns: series =
+pd.to_numeric(df[col], errors=‘coerce’) mask_invalid = (series < low) |
+(series > high) | (series.isna()) count_invalid = mask_invalid.sum()
+invalid_summary[col] = int(count_invalid)
+invalid_indices.update(df[mask_invalid].index.tolist()) else:
+invalid_summary[col] = ‘MISSING_COLUMN’
+
+print(“counts per column (according to rules):”) for k, v in
+invalid_summary.items(): print(f” - {k}: {v}“)
+
+if invalid_indices: print(“invalid rows (first 20):”)
+print(df.loc[sorted(list(invalid_indices))].head(20)) else:
+print(“invalid rows found according to the rules.”)
+
+report = pd.DataFrame([ {‘Check’: ‘initial_shape’, ‘Value’:
+f”{df.shape}“}, {‘Check’: ‘missing_per_column’, ‘Value’:
+df.isnull().sum().to_dict()}, {‘Check’: ‘duplicate_rows’, ‘Value’:
+int(df.duplicated().sum())}, {‘Check’: ‘invalid_counts’, ‘Value’:
+invalid_summary}, {‘Check’: ‘invalid_row_indices_sample’, ‘Value’:
+list(sorted(list(invalid_indices)))[:20]}])
+
+print(“report (summary):”) print(report.T)
