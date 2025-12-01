@@ -100,3 +100,19 @@ invalid_summary}, {‘Check’: ‘invalid_row_indices_sample’, ‘Value’:
 list(sorted(list(invalid_indices)))[:20]}])
 
 print(“report (summary):”) print(report.T)
+
+
+print("\n[Analysis 1]")
+print(df[['gre_score','toefl_score','university_rating','sop','lor','cgpa','research','chance_of_admit']].describe().T)
+
+print("\n[Analysis 2]")
+print(df[['gre_score','toefl_score','university_rating','sop','lor','cgpa','research','chance_of_admit']].corr())
+
+print("\n[Analysis 3]")
+print(df[['gre_score','toefl_score','cgpa','chance_of_admit']].corr()['chance_of_admit'].sort_values(ascending=False))
+
+print("\n[Analysis 4]")
+print(df.groupby('university_rating')['chance_of_admit'].mean())
+
+print("\n[Analysis 5]")
+print(df.groupby('research')['chance_of_admit'].agg(['mean','count']))
